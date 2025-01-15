@@ -2,13 +2,13 @@ class UserSchema {
   final int? id;
   final String username;
   final String email;
-  final String? password;
+  final String password;
 
   UserSchema({
     this.id,
     required this.username,
     required this.email,
-    this.password,
+    required this.password,
   });
 
   Map<String, dynamic> toJson() {
@@ -16,7 +16,7 @@ class UserSchema {
       if (id != null) 'id': id,
       'username': username,
       'email': email,
-      if (password != null) 'password': password,
+      'password': password,
     };
   }
 

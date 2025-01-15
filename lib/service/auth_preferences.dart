@@ -4,12 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthPreferences {
 
-  static Future<void> saveInformation(String name, String email, String password) async {
-    BookingAppDB db = BookingAppDB.instance;
-    UserSchema newUser = await db.insertUser(UserSchema(username: name, email: email, password: password));
+  static Future<void> saveInformation(int id) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    print('User ID: ${newUser.id}');
-    await prefs.setInt('_userID', newUser.id!);
+    await prefs.setInt('_userID', id);
   }
 
   static Future<UserSchema?> getUserData() async {
@@ -19,7 +16,7 @@ class AuthPreferences {
       return null;
     }
     BookingAppDB db = BookingAppDB.instance;
-    UserSchema user = await db.getUser(userID);
+    UserSchema? user = await db.getUser(userID);
     return user;
   }
 

@@ -10,7 +10,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
   UserSchema? _user;
 
   String welcomeText = 'Welcome to the home page';
@@ -28,7 +27,7 @@ class _HomePageState extends State<HomePage> {
         _user = user;
         welcomeText = 'Welcome ${_user!.username}';
       });
-  }
+    }
   }
 
   @override
@@ -36,6 +35,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
+
       ),
       body: Center(
         child: Column(
@@ -44,9 +44,35 @@ class _HomePageState extends State<HomePage> {
             Text(
               welcomeText,
             ),
+            ElevatedButton(
+              onPressed: () {
+                _signOut().then((_) {
+                  Navigator.popAndPushNamed(context, '/home');
+                });
+              },
+              child: const Text(
+                'DESLOGAR',
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _signOut().then((_) {
+                  Navigator.popAndPushNamed(context, '/login');
+                });
+              },
+              child: const Text(
+                'LOGIN',
+                style: TextStyle(fontSize: 18),
+              ),
+            )
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _signOut() async {
+    await AuthPreferences.removeAuthenticationInfo();
   }
 }

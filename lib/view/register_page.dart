@@ -3,14 +3,14 @@ import 'package:booking_app/model/user.dart';
 import 'package:booking_app/service/auth_preferences.dart';
 import 'package:flutter/material.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  _RegisterPageState createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -27,7 +27,7 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Bem vindo de volta!',
+                'Crie sua conta!',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -35,8 +35,14 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Entre na sua conta para continuar!',
+                'Cria sua conta para continuar!',
                 style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              _buildTextField(
+                controller: _fullNameController,
+                label: 'Nome Completo',
+                icon: Icons.person,
               ),
               const SizedBox(height: 16),
               _buildTextField(
@@ -69,21 +75,20 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: _isLoading
                       ? null
                       : () {
-                          setState(() {
-                            _isLoading = true;
-                          });
-                          _login().then((logged) {
-                            setState(() {
-                              _isLoading = false;
-                            });
-                            if (logged) {
-                              Navigator.popAndPushNamed(context, '/home');
-                            }
-                            else {
-                              _showErrorMensage();
-                            }
-                          });
-                        },
+                    setState(() {
+                      _isLoading = true;
+                    });
+                    _register().then((registered) {
+                      setState(() {
+                        _isLoading = false;
+                      });
+                      if (registered) {
+                        Navigator.popAndPushNamed(context, '/home');
+                      } else {
+                        _showErrorMensage();
+                      }
+                    });
+                  },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -93,43 +98,43 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        )
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  )
                       : const Text(
-                          'Entrar',
-                          style: TextStyle(fontSize: 18, color: Colors.white),
-                        ),
+                    'Criar conta',
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               Center(
                   child: Row(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(right: 8.0),
-                    // Margem à direita
-                    child: Text(
-                      'Ainda não tem uma conta?',
-                      style: TextStyle(
-                        fontSize: 16,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(right: 8.0),
+                        // Margem à direita
+                        child: Text(
+                          'Já possui uma conta?',
+                          style: TextStyle(
+                            fontSize: 16,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.popAndPushNamed(context, '/register');
-                    },
-                    child: const Text(
-                      'Registre-se',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.popAndPushNamed(context, '/login');
+                        },
+                        child: const Text(
+                          'Entrar',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ],
-              )),
+                    ],
+                  )),
             ],
           ),
         ),
@@ -162,25 +167,25 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Future<bool> _login() async {
+  Future<bool> _register() async {
+    String fullName = _fullNameController.text;
     String email = _emailController.text;
     String password = _passwordController.text;
 
     BookingAppDB db = BookingAppDB.instance;
-    UserSchema? user = await db.fetchUserByEmail(email, password);
+    UserSchema? user = UserSchema(username: fullName, email: email, password: password);
+    user = await db.insertUser(user);
 
-    if (user != null) {
-      AuthPreferences.saveInformation(user.id!);
-      return true;
-    }
+    if (user == null) return false;
 
-    return false;
+    AuthPreferences.saveInformation(user.id!);
+    return true;
   }
 
   void _showErrorMensage() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Email ou senha incorreto.'),
+        content: Text('Email já está em uso!'),
         backgroundColor: Colors.red,
       ),
     );

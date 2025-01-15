@@ -6,7 +6,7 @@ Future<void> _createDatabase(Database db, int version) async {
         CREATE TABLE user(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           username VARCHAR NOT NULL,
-          email VARCHAR NOT NULL,
+          email VARCHAR NOT NULL UNIQUE,
           password VARCHAR NOT NULL
         )
       ''');
@@ -43,16 +43,41 @@ class BookingAppDB {
     db.close();
   }
 
-  Future<UserSchema> insertUser(UserSchema user) async {
+  Future<UserSchema?> insertUser(UserSchema user) async {
     final db = await instance.database;
+    final users = await db.query('user');
+
+    if (users.any((element) => element['email'] == user.email)) {
+      return null;
+    }
+
     final id = await db.insert('user', user.toJson());
     return user.copy(id: id);
   }
 
-  Future<UserSchema> getUser(int id) async {
+  Future<UserSchema?> getUser(int id) async {
     final db = await instance.database;
     final users = await db.query('user');
-    final user = users.firstWhere((element) => element['id'] == id);
-    return UserSchema.fromJson(user);
+
+    if (users.any((element) => element['id'] == id)) {
+      final user = users.firstWhere((element) => element['id'] == id);
+      return UserSchema.fromJson(user);
+    }
+
+    return null;
+  }
+
+
+
+  Future<UserSchema?> fetchUserByEmail(String email, String password) async {
+    final db = await instance.database;
+    final users = await db.query('user');
+
+    if (users.any((element) => element['email'] == email)) {
+      final user = users.firstWhere((element) => element['email'] == email);
+      if (user['password'] == password) return UserSchema.fromJson(user);
+    }
+
+    return null;
   }
 }
