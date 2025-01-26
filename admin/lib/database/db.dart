@@ -78,8 +78,6 @@ class BookingAppDB {
     return null;
   }
 
-
-
   Future<UserSchema?> fetchUserByEmail(String email, String password) async {
     final db = await instance.database;
     final users = await db.query('user');
