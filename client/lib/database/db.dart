@@ -6,7 +6,7 @@ Future<void> _createDatabase(Database db, int version) async {
   return await db.execute('''
         CREATE TABLE user(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          username VARCHAR NOT NULL,
+          name VARCHAR NOT NULL,
           email VARCHAR NOT NULL UNIQUE,
           password VARCHAR NOT NULL
         )
@@ -39,7 +39,6 @@ class BookingAppDB {
     }
 
     final path = '${directory.path}/shared_data.db';
-    print("Shared database path: $path");
 
     // Inicializa o banco de dados no caminho compartilhado
     return await openDatabase(

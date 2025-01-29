@@ -14,7 +14,7 @@ class UserSchema {
   Map<String, dynamic> toJson() {
     return {
       if (id != null) 'id': id,
-      'username': username,
+      'name': username,
       'email': email,
       'password': password,
     };
@@ -24,7 +24,7 @@ class UserSchema {
   factory UserSchema.fromJson(Map<String, dynamic> json) {
     return UserSchema(
       id: json['id'],
-      username: json['username'],
+      username: json['name'],
       email: json['email'],
       password: json['password'],
     );

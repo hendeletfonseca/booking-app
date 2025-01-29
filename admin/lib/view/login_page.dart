@@ -120,9 +120,6 @@ class _LoginPageState extends State<LoginPage> {
                   GestureDetector(
                     onTap: () {
                       Navigator.popAndPushNamed(context, '/register');
-                      // requestPermissions().then((_) {
-                      //   print("Permissions granted");
-                      // });
                     },
                     child: const Text(
                       'Registre-se',

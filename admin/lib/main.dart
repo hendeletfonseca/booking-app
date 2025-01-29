@@ -8,6 +8,7 @@ void main() async {
   bool isAuthenticated = await AuthPreferences.isAuthenticated();
 
   initialRoute = isAuthenticated ? '/home' : '/login';
+  initialRoute = '/home';
 
   runApp(
     MyApp(
