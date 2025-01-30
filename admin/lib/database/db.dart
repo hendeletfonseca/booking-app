@@ -9,7 +9,18 @@ Future<void> _createDatabase(Database db, int version) async {
           name VARCHAR NOT NULL,
           email VARCHAR NOT NULL UNIQUE,
           password VARCHAR NOT NULL
-        )
+        );
+
+        CREATE TABLE address(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cep VARCHAR NOT NULL UNIQUE,
+            logradouro VARCHAR NOT NULL,
+            bairro VARCHAR NOT NULL,
+            localidade VARCHAR NOT NULL,
+            uf VARCHAR NOT NULL,
+            estado VARCHAR NOT NULL
+        );        
+
       ''');
 }
 
