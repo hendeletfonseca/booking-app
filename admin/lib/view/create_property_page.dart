@@ -1,4 +1,8 @@
+import 'package:admin/database/db.dart';
 import 'package:admin/model/address.dart';
+import 'package:admin/model/property.dart';
+import 'package:admin/model/user.dart';
+import 'package:admin/service/auth_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:admin/service/api.dart' as api;
 import 'package:image_picker/image_picker.dart';
@@ -12,8 +16,13 @@ class CreatePropertyPage extends StatefulWidget {
 }
 
 class _CreatePropertyState extends State<CreatePropertyPage> {
+  UserSchema? _user;
+
   final ImagePicker _picker = ImagePicker();
   XFile? _image;
+
+  bool _isSearchingCep = false;
+  bool _isCreatingProperty = false;
 
   final TextEditingController _cepController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
@@ -22,15 +31,47 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
   final TextEditingController _complementController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _maxGuestController = TextEditingController();
-  final TextEditingController _thumbnailController = TextEditingController();
 
   Address? _address;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _user = ModalRoute.of(context)!.settings.arguments as UserSchema?;
+      });
+    });
+  }
+
+
   Future<void> _buscarCep() async {
-    api.getCep(_cepController.text).then((address) {
+    setState(() {
+      _isSearchingCep = true;
+    });
+
+    String cepFormated = _cepController.text.replaceFirstMapped(
+        RegExp(r'^(\d{5})(\d{3})$'),
+            (match) => '${match.group(1)}-${match.group(2)}'
+    );
+
+    BookingAppDB db = BookingAppDB.instance;
+    Address? dbAddress = await db.fetchAddressByCEP(cepFormated);
+
+    if (dbAddress != null) {
+      setState(() {
+        _address = dbAddress;
+        _isSearchingCep = false;
+      });
+      return;
+    }
+
+    api.getCep(cepFormated).then((address) {
       if (address != null) {
-        setState(() {
-          _address = address;
+        db.insertAddress(address).then((onValue){
+          setState(() {
+            _address = onValue;
+          });
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -40,25 +81,10 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
           ),
         );
       }
+      setState(() {
+        _isSearchingCep = false;
+      });
     });
-  }
-
-  Widget _buildAddressInfo(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "$label: ",
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          Expanded(
-            child: Text(value, overflow: TextOverflow.ellipsis),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildTextField(String label, TextEditingController controller,
@@ -110,7 +136,7 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
     });
   }
 
-  void _criarPropriedade() {
+  void _criarPropriedade() async {
     if (_address == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -159,11 +185,63 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Propriedade criada com sucesso!'),
-        backgroundColor: Colors.green,
-      ),
+    setState(() {
+      _isCreatingProperty = true;
+    });
+
+    BookingAppDB db = BookingAppDB.instance;
+    _address = await db.insertAddress(_address!);
+
+    if (_address == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erro ao salvar o endereço'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() {
+        _isCreatingProperty = false;
+      });
+      return;
+    }
+
+    PropertySchema property = PropertySchema(
+      userId: _user!.id!,
+      title: _titleController.text,
+      description: _descriptionController.text,
+      addressId: _address!.id!,
+      number: int.parse(_numberController.text),
+      complement: _complementController.text,
+      price: double.parse(_priceController.text),
+      maxGuests: int.parse(_maxGuestController.text),
+      thumbnail: _image!.path,
+    );
+
+    property = await db.insertProperty(property);
+
+    setState(() {
+      _isCreatingProperty = false;
+    });
+
+    // exiba um dialog que ao clicar em ok de pop na tela
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Propriedade Criada'),
+          content: const Text('Sua propriedade foi criada com sucesso!'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -178,10 +256,8 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Digite o CEP:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            const Text('Digite o CEP:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -192,15 +268,16 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
                     decoration: InputDecoration(
                       labelText: 'CEP',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: _buscarCep,
-                  child: const Icon(Icons.search),
+                  onPressed: _isSearchingCep ? null : _buscarCep,
+                  child: _isSearchingCep
+                      ? const CircularProgressIndicator()
+                      : const Icon(Icons.search),
                 ),
               ],
             ),
@@ -209,22 +286,20 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
               Card(
                 elevation: 2,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                    borderRadius: BorderRadius.circular(8)),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildAddressInfo('Logradouro', _address!.logradouro),
-                      _buildAddressInfo('Bairro', _address!.bairro),
-                      _buildAddressInfo('Cidade', _address!.localidade),
-                      _buildAddressInfo('Estado', _address!.uf),
+                      Text('Logradouro: ${_address!.logradouro}'),
+                      Text('Bairro: ${_address!.bairro}'),
+                      Text('Cidade: ${_address!.localidade}'),
+                      Text('Estado: ${_address!.uf}'),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
               _buildTextField("Título", _titleController),
               _buildTextField("Descrição", _descriptionController),
               _buildTextField("Número", _numberController,
@@ -234,24 +309,19 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
                   keyboardType: TextInputType.number),
               _buildTextField("Máx. Hóspedes", _maxGuestController,
                   keyboardType: TextInputType.number),
-              
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: ElevatedButton(
-                  onPressed: _pickImage,
-                  child: const Text("Selecionar Imagem (Thumbnail)"),
-                ),
+              ElevatedButton(
+                onPressed: _pickImage,
+                child: const Text("Selecionar Imagem (Thumbnail)"),
               ),
-              if (_image != null) ...[
-                const SizedBox(height: 8),
-                Text("Imagem Selecionada: ${_image!.path}"),
-              ],
+              if (_image != null) Image.file(File(_image!.path), height: 100),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _criarPropriedade,
-                  child: const Text("Criar Propriedade"),
+                  onPressed: _isCreatingProperty ? null : _criarPropriedade,
+                  child: _isCreatingProperty
+                      ? const CircularProgressIndicator()
+                      : const Text("Criar Propriedade"),
                 ),
               ),
             ]

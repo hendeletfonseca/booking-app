@@ -1,27 +1,56 @@
+import 'package:admin/model/address.dart';
+import 'package:admin/model/property.dart';
 import 'package:admin/model/user.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:io';
 
 Future<void> _createDatabase(Database db, int version) async {
-  return await db.execute('''
-        CREATE TABLE user(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name VARCHAR NOT NULL,
-          email VARCHAR NOT NULL UNIQUE,
-          password VARCHAR NOT NULL
-        );
+  await db.execute('''
+    CREATE TABLE IF NOT EXISTS user(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name VARCHAR NOT NULL,
+      email VARCHAR NOT NULL UNIQUE,
+      password VARCHAR NOT NULL
+    );
+  ''');
 
-        CREATE TABLE address(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            cep VARCHAR NOT NULL UNIQUE,
-            logradouro VARCHAR NOT NULL,
-            bairro VARCHAR NOT NULL,
-            localidade VARCHAR NOT NULL,
-            uf VARCHAR NOT NULL,
-            estado VARCHAR NOT NULL
-        );        
+  await db.execute('''
+    CREATE TABLE IF NOT EXISTS address(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      cep VARCHAR NOT NULL UNIQUE,
+      logradouro VARCHAR NOT NULL,
+      bairro VARCHAR NOT NULL,
+      localidade VARCHAR NOT NULL,
+      uf VARCHAR NOT NULL,
+      estado VARCHAR NOT NULL
+    );
+  ''');
 
-      ''');
+  await db.execute('''
+    CREATE TABLE IF NOT EXISTS property(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      address_id INTEGER NOT NULL,
+      title VARCHAR NOT NULL,
+      description VARCHAR NOT NULL,
+      number INTEGER NOT NULL,
+      complement VARCHAR,
+      price REAL NOT NULL,
+      max_guest INTEGER NOT NULL,
+      thumbnail VARCHAR NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES user(id),
+      FOREIGN KEY(address_id) REFERENCES address(id)
+    );        
+  ''');
+
+  await db.execute('''
+    CREATE TABLE IF NOT EXISTS images(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      property_id INTEGER NOT NULL,
+      path VARCHAR NOT NULL,    
+      FOREIGN KEY(property_id) REFERENCES property(id)
+    );
+  ''');
 }
 
 class BookingAppDB {
@@ -41,17 +70,14 @@ class BookingAppDB {
   }
 
   Future<Database> _initDatabase() async {
-    // Obtém o diretório público no armazenamento externo
     final directory = Directory('/storage/emulated/0/BookingApp');
 
-    // Cria o diretório se ele não existir
     if (!directory.existsSync()) {
       directory.createSync(recursive: true);
     }
 
     final path = '${directory.path}/shared_data.db';
 
-    // Inicializa o banco de dados no caminho compartilhado
     return await openDatabase(
       path,
       version: 1,
@@ -99,4 +125,43 @@ class BookingAppDB {
 
     return null;
   }
+
+  Future<Address?> fetchAddressByCEP(String cep) async {
+    final db = await instance.database;
+    final addresses = await db.query('address');
+
+    if (addresses.any((element) => element['cep'] == cep)) {
+      final address = addresses.firstWhere((element) => element['cep'] == cep);
+      return Address.fromJson(address);
+    }
+
+    return null;
+  }
+
+  Future<Address?> insertAddress(Address address) async {
+    final db = await instance.database;
+    final addresses = await db.query('address');
+
+    if (addresses.any((element) => element['cep'] == address.cep)) {
+      final dbAddress = addresses.firstWhere((element) => element['cep'] == address.cep);
+      return Address.fromJson(dbAddress);
+    }
+
+    final id = await db.insert('address', address.toJson());
+    return address.copy(id: id);
+  }
+
+  Future<bool> cepUsed(String cep) async {
+    final db = await instance.database;
+    final properties = await db.query('property');
+
+    return properties.any((element) => element['cep'] == cep);
+  }
+
+  Future<PropertySchema> insertProperty(PropertySchema property) async {
+    final db = await instance.database;
+    final id = await db.insert('property', property.toJson());
+    return property.copy(id: id);
+  }
+
 }

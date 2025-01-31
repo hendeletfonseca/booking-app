@@ -15,8 +15,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   UserSchema? _user;
 
-  final TextEditingController _cepController = TextEditingController();
-
   int currentPageIndex = 0;
 
   @override
@@ -126,7 +124,11 @@ class _HomePageState extends State<HomePage> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/create-property');
+                  Navigator.pushNamed(
+                    context,
+                    '/create-property',
+                    arguments: _user,
+                  );
                 },
                 child: const Icon(Icons.add),
               ),
