@@ -44,7 +44,6 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
     });
   }
 
-
   Future<void> _buscarCep() async {
     setState(() {
       _isSearchingCep = true;
@@ -52,8 +51,7 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
 
     String cepFormated = _cepController.text.replaceFirstMapped(
         RegExp(r'^(\d{5})(\d{3})$'),
-            (match) => '${match.group(1)}-${match.group(2)}'
-    );
+        (match) => '${match.group(1)}-${match.group(2)}');
 
     BookingAppDB db = BookingAppDB.instance;
     Address? dbAddress = await db.fetchAddressByCEP(cepFormated);
@@ -68,7 +66,7 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
 
     api.getCep(cepFormated).then((address) {
       if (address != null) {
-        db.insertAddress(address).then((onValue){
+        db.insertAddress(address).then((onValue) {
           setState(() {
             _address = onValue;
           });

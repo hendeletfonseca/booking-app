@@ -30,7 +30,6 @@ Future<void> _createDatabase(Database db, int version) async {
       ''');
   print("Tabela address criada.");
 
-
   await db.execute('''
       CREATE TABLE property(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -219,6 +218,4 @@ class BookingAppDB {
       whereArgs: [id],
     );
   }
-
-
 }

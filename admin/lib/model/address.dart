@@ -2,7 +2,7 @@ class Address {
   final int? id;
   final String cep;
   final String logradouro;
-  final String bairro;  
+  final String bairro;
   final String localidade;
   final String uf;
   final String estado;
@@ -65,5 +65,4 @@ class Address {
   String toString() {
     return 'Address{id: $id, cep: $cep, logradouro: $logradouro, bairro: $bairro, localidade: $localidade, uf: $uf, estado: $estado}';
   }
-
 }

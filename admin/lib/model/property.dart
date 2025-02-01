@@ -86,7 +86,6 @@ class PropertySchema {
   String toString() {
     return 'PropertySchema{id: $id, userId: $userId, addressId: $addressId, title: $title, description: $description, number: $number, complement: $complement, price: $price, maxGuests: $maxGuests, thumbnail: $thumbnail}';
   }
-
 }
 
 class Property {
@@ -174,5 +173,4 @@ class Property {
   String toString() {
     return 'Property{id: $id, user: $user, address: $address, title: $title, description: $description, number: $number, complement: $complement, price: $price, maxGuests: $maxGuests, thumbnail: $thumbnail}';
   }
-
 }

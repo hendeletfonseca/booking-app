@@ -1,3 +1,7 @@
+import 'package:admin/database/db.dart';
+import 'package:admin/model/address.dart';
+import 'package:admin/model/images.dart';
+import 'package:admin/model/property.dart';
 import 'package:admin/model/user.dart';
 import 'package:admin/service/auth_preferences.dart';
 import 'package:flutter/material.dart';
@@ -17,10 +21,13 @@ class _HomePageState extends State<HomePage> {
 
   int currentPageIndex = 0;
 
+  late Future<List<PropertySchema>> _propertiesFuture;
+
   @override
   void initState() {
     super.initState();
     _checkAndRequestPermission();
+    _propertiesFuture = BookingAppDB.instance.getAllProperties();
   }
 
   void _checkAndRequestPermission() async {
@@ -83,38 +90,18 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<void> _deleteProperty(int propertyId) async {
+    await BookingAppDB.instance.deleteProperty(propertyId);
+    setState(() {
+      _propertiesFuture = BookingAppDB.instance.getAllProperties();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home Page'),
-      ),
-      bottomNavigationBar: NavigationBar(
-        onDestinationSelected: (int index) {
-          setState(() {
-            currentPageIndex = index;
-          });
-        },
-        indicatorColor: Colors.amber,
-        selectedIndex: currentPageIndex,
-        destinations: const <Widget>[
-          NavigationDestination(
-            selectedIcon: Icon(Icons.home),
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Badge(child: Icon(Icons.notifications_sharp)),
-            label: 'Notifications',
-          ),
-          NavigationDestination(
-            icon: Badge(
-              label: Text('2'),
-              child: Icon(Icons.messenger_sharp),
-            ),
-            label: 'Messages',
-          ),
-        ],
+        title: const Text('Admin'),
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -132,17 +119,204 @@ class _HomePageState extends State<HomePage> {
                 },
                 child: const Icon(Icons.add),
               ),
+              ElevatedButton(
+                onPressed: () {
+                  _signOut().then((_) {
+                    Navigator.popAndPushNamed(context, '/login');
+                  });
+                },
+                child: const Text(
+                  'DESLOGAR',
+                  style: TextStyle(fontSize: 18),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  BookingAppDB.instance.getAllProperties().then((value) {
+                    setState(() {
+                      _propertiesFuture = Future.value(value);
+                    });
+                  });
+                },
+                child: const Icon(Icons.refresh),
+              ),
             ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              _signOut().then((_) {
-                Navigator.popAndPushNamed(context, '/login');
-              });
-            },
-            child: const Text(
-              'DESLOGAR',
-              style: TextStyle(fontSize: 18),
+          Expanded(
+            child: FutureBuilder<List<PropertySchema>>(
+              future: _propertiesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Erro: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(
+                      child: Text('Nenhuma propriedade encontrada.'));
+                } else {
+                  final properties = snapshot.data!;
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: properties.length,
+                    itemBuilder: (context, index) {
+                      final property = properties[index];
+                      return FutureBuilder<List<ImageSchema>>(
+                        future: BookingAppDB.instance
+                            .getImagesByProperty(property.id!),
+                        builder: (context, imageSnapshot) {
+                          if (imageSnapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          } else if (imageSnapshot.hasError) {
+                            return Center(
+                                child: Text(
+                                    'Erro ao carregar imagens: ${imageSnapshot.error}'));
+                          } else {
+                            final images = imageSnapshot.data ?? [];
+                            return FutureBuilder<Address?>(
+                              future: BookingAppDB.instance
+                                  .getAddress(property.addressId),
+                              builder: (context, addressSnapshot) {
+                                if (addressSnapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Center(
+                                      child: CircularProgressIndicator());
+                                } else if (addressSnapshot.hasError) {
+                                  return Center(
+                                      child: Text(
+                                          'Erro ao carregar endereço: ${addressSnapshot.error}'));
+                                } else if (!addressSnapshot.hasData) {
+                                  return const Center(
+                                      child: Text('Endereço não encontrado.'));
+                                } else {
+                                  final address = addressSnapshot.data!;
+                                  return Card(
+                                    elevation: 4,
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 10),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(10),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // Carrossel de imagens
+                                          SizedBox(
+                                            height: 180,
+                                            child: PageView.builder(
+                                              itemCount: images.length,
+                                              controller: PageController(
+                                                  viewportFraction: 0.8),
+                                              itemBuilder:
+                                                  (context, pageIndex) {
+                                                return Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(horizontal: 5),
+                                                  child: ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    child: Image.asset(
+                                                      images[pageIndex].path,
+                                                      width: double.infinity,
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    '${address.localidade}, ${address.uf}',
+                                                    style: const TextStyle(
+                                                      fontSize: 18,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    'R\$${property.price} noite',
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              Row(
+                                                children: [
+                                                  IconButton(
+                                                    icon: const Icon(Icons.edit, color: Colors.blue),
+                                                    onPressed: () {
+                                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                                        content: Text('IMPLEMENTAR PAGINA EDIÇAO')
+                                                      ));
+                                                      // Navigator.pushNamed(
+                                                      //   context,
+                                                      //   '/edit_property',
+                                                      //   arguments: property,
+                                                      // );
+                                                    },
+                                                  ),
+                                                  // Botão de Deletar
+                                                  IconButton(
+                                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                                    onPressed: () async {
+                                                      bool confirmDelete = await showDialog(
+                                                        context: context,
+                                                        builder: (context) => AlertDialog(
+                                                          title: const Text('Confirmar exclusão'),
+                                                          content: const Text('Tem certeza que deseja excluir esta propriedade?'),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () => Navigator.pop(context, false),
+                                                              child: const Text('Cancelar'),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () => Navigator.pop(context, true),
+                                                              child: const Text(
+                                                                'Excluir',
+                                                                style: TextStyle(color: Colors.red),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+
+                                                      if (confirmDelete == true) {
+                                                        await _deleteProperty(property.id!);
+                                                      }
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                            );
+                          }
+                        },
+                      );
+                    },
+                  );
+                }
+              },
             ),
           ),
         ],

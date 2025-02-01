@@ -3,7 +3,6 @@ import 'package:booking_app/model/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthPreferences {
-
   static Future<void> saveInformation(int id) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setInt('_userID', id);
@@ -21,7 +20,8 @@ class AuthPreferences {
   }
 
   static Future<bool> isAuthenticated() async {
-    int? id = await SharedPreferences.getInstance().then((prefs) => prefs.getInt('_userID'));
+    int? id = await SharedPreferences.getInstance()
+        .then((prefs) => prefs.getInt('_userID'));
     return id != null;
   }
 

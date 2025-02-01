@@ -7,7 +7,7 @@ void main() async {
 
   bool isAuthenticated = await AuthPreferences.isAuthenticated();
   String initialRoute = isAuthenticated ? '/home' : '/login';
-
+  initialRoute = '/home';
 
   runApp(
     MyApp(
@@ -15,10 +15,11 @@ void main() async {
     ),
   );
 }
+
 class MyApp extends StatelessWidget {
   final String initialRoute;
 
-  const MyApp({super.key, required this.initialRoute});  
+  const MyApp({super.key, required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {

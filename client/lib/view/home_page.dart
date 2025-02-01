@@ -117,21 +117,27 @@ class _HomePageState extends State<HomePage> {
               itemBuilder: (context, index) {
                 final property = properties[index];
                 return FutureBuilder<List<ImageSchema>>(
-                  future: BookingAppDB.instance.getImagesByProperty(property.id!),
+                  future:
+                      BookingAppDB.instance.getImagesByProperty(property.id!),
                   builder: (context, imageSnapshot) {
-                    if (imageSnapshot.connectionState == ConnectionState.waiting) {
+                    if (imageSnapshot.connectionState ==
+                        ConnectionState.waiting) {
                       return const CircularProgressIndicator();
                     } else if (imageSnapshot.hasError) {
-                      return Text('Erro ao carregar imagens: ${imageSnapshot.error}');
+                      return Text(
+                          'Erro ao carregar imagens: ${imageSnapshot.error}');
                     } else {
                       final images = imageSnapshot.data ?? [];
                       return FutureBuilder<AddressSchema?>(
-                        future: BookingAppDB.instance.getAddress(property.addressId),
+                        future: BookingAppDB.instance
+                            .getAddress(property.addressId),
                         builder: (context, addressSnapshot) {
-                          if (addressSnapshot.connectionState == ConnectionState.waiting) {
+                          if (addressSnapshot.connectionState ==
+                              ConnectionState.waiting) {
                             return const CircularProgressIndicator();
                           } else if (addressSnapshot.hasError) {
-                            return Text('Erro ao carregar endereço: ${addressSnapshot.error}');
+                            return Text(
+                                'Erro ao carregar endereço: ${addressSnapshot.error}');
                           } else if (!addressSnapshot.hasData) {
                             return const Text('Endereço não encontrado.');
                           } else {
@@ -149,12 +155,15 @@ class _HomePageState extends State<HomePage> {
                                       height: 180,
                                       child: PageView.builder(
                                         itemCount: images.length,
-                                        controller: PageController(viewportFraction: 0.8),
+                                        controller: PageController(
+                                            viewportFraction: 0.8),
                                         itemBuilder: (context, pageIndex) {
                                           return Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 5),
                                             child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(10),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
                                               child: Image.asset(
                                                 images[pageIndex].path,
                                                 width: double.infinity,

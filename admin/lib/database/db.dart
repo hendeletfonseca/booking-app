@@ -1,4 +1,5 @@
 import 'package:admin/model/address.dart';
+import 'package:admin/model/images.dart';
 import 'package:admin/model/property.dart';
 import 'package:admin/model/user.dart';
 import 'package:sqflite/sqflite.dart';
@@ -50,6 +51,22 @@ Future<void> _createDatabase(Database db, int version) async {
       path VARCHAR NOT NULL,    
       FOREIGN KEY(property_id) REFERENCES property(id)
     );
+  ''');
+
+  await db.execute('''
+    CREATE TABLE booking(
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     user_id INTEGER NOT NULL,
+     property_id INTEGER NOT NULL,
+     checkin_date VARCHAR NOT NULL,
+     checkout_date VARCHAR NOT NULL,
+     total_days INTEGER NOT NULL,
+     total_price REAL NOT NULL,
+     amount_guest INTEGER NOT NULL,
+     rating REAL,
+     FOREIGN KEY(user_id) REFERENCES user(id),
+     FOREIGN KEY(property_id) REFERENCES property(id) ON DELETE CASCADE
+    )
   ''');
 }
 
@@ -126,6 +143,19 @@ class BookingAppDB {
     return null;
   }
 
+  Future<Address?> getAddress(int id) async {
+    final db = await instance.database;
+    final addresses = await db.query(
+      'address',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (addresses.isNotEmpty) {
+      return Address.fromJson(addresses.first);
+    }
+    return null;
+  }
+
   Future<Address?> fetchAddressByCEP(String cep) async {
     final db = await instance.database;
     final addresses = await db.query('address');
@@ -143,7 +173,8 @@ class BookingAppDB {
     final addresses = await db.query('address');
 
     if (addresses.any((element) => element['cep'] == address.cep)) {
-      final dbAddress = addresses.firstWhere((element) => element['cep'] == address.cep);
+      final dbAddress =
+          addresses.firstWhere((element) => element['cep'] == address.cep);
       return Address.fromJson(dbAddress);
     }
 
@@ -164,4 +195,28 @@ class BookingAppDB {
     return property.copy(id: id);
   }
 
+  Future<List<PropertySchema>> getAllProperties() async {
+    final db = await instance.database;
+    final properties = await db.query('property');
+    return properties.map((json) => PropertySchema.fromJson(json)).toList();
+  }
+
+  Future<List<ImageSchema>> getImagesByProperty(int propertyId) async {
+    final db = await instance.database;
+    final images = await db.query(
+      'images',
+      where: 'property_id = ?',
+      whereArgs: [propertyId],
+    );
+    return images.map((json) => ImageSchema.fromJson(json)).toList();
+  }
+
+  Future<void> deleteProperty(int id) async {
+    final db = await instance.database;
+    await db.delete(
+      'property',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
 }

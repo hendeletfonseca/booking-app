@@ -75,20 +75,20 @@ class _RegisterPageState extends State<RegisterPage> {
                   onPressed: _isLoading
                       ? null
                       : () {
-                    setState(() {
-                      _isLoading = true;
-                    });
-                    _register().then((registered) {
-                      setState(() {
-                        _isLoading = false;
-                      });
-                      if (registered) {
-                        Navigator.popAndPushNamed(context, '/home');
-                      } else {
-                        _showErrorMensage();
-                      }
-                    });
-                  },
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          _register().then((registered) {
+                            setState(() {
+                              _isLoading = false;
+                            });
+                            if (registered) {
+                              Navigator.popAndPushNamed(context, '/home');
+                            } else {
+                              _showErrorMensage();
+                            }
+                          });
+                        },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -98,43 +98,43 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  )
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        )
                       : const Text(
-                    'Criar conta',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
+                          'Criar conta',
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
                 ),
               ),
               const SizedBox(height: 16),
               Center(
                   child: Row(
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(right: 8.0),
-                        // Margem à direita
-                        child: Text(
-                          'Já possui uma conta?',
-                          style: TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(right: 8.0),
+                    // Margem à direita
+                    child: Text(
+                      'Já possui uma conta?',
+                      style: TextStyle(
+                        fontSize: 16,
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.popAndPushNamed(context, '/login');
-                        },
-                        child: const Text(
-                          'Entrar',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.popAndPushNamed(context, '/login');
+                    },
+                    child: const Text(
+                      'Entrar',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
-                  )),
+                    ),
+                  ),
+                ],
+              )),
             ],
           ),
         ),
@@ -173,7 +173,8 @@ class _RegisterPageState extends State<RegisterPage> {
     String password = _passwordController.text;
 
     BookingAppDB db = BookingAppDB.instance;
-    UserSchema? user = UserSchema(username: fullName, email: email, password: password);
+    UserSchema? user =
+        UserSchema(username: fullName, email: email, password: password);
     user = await db.insertUser(user);
 
     if (user == null) return false;
@@ -190,5 +191,4 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
     );
   }
-
 }

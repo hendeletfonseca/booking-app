@@ -20,7 +20,6 @@ class UserSchema {
     };
   }
 
-
   factory UserSchema.fromJson(Map<String, dynamic> json) {
     return UserSchema(
       id: json['id'],

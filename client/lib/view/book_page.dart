@@ -23,7 +23,6 @@ class _BookPageState extends State<BookPage> {
     _checkAndRequestPermission();
   }
 
-
   void _checkAndRequestPermission() async {
     if (await Permission.manageExternalStorage.isGranted) return;
     _showPermissionDialog();
@@ -82,13 +81,11 @@ class _BookPageState extends State<BookPage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
-
       ),
       body: Center(
         child: Column(

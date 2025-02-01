@@ -79,8 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                             });
                             if (logged) {
                               Navigator.popAndPushNamed(context, '/home');
-                            }
-                            else {
+                            } else {
                               _showErrorMensage();
                             }
                           });
@@ -188,10 +187,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> requestPermissions() async {
-  final status = await Permission.manageExternalStorage.request();
-  if (!status.isGranted) {
-    throw Exception("Storage permission not granted");
+    final status = await Permission.manageExternalStorage.request();
+    if (!status.isGranted) {
+      throw Exception("Storage permission not granted");
+    }
   }
-}
-
 }
