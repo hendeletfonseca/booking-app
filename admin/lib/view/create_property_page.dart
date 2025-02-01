@@ -8,6 +8,8 @@ import 'package:admin/service/api.dart' as api;
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
+import 'package:path_provider/path_provider.dart';
+
 class CreatePropertyPage extends StatefulWidget {
   const CreatePropertyPage({super.key});
 
@@ -19,7 +21,7 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
   UserSchema? _user;
 
   final ImagePicker _picker = ImagePicker();
-  XFile? _image;
+  File? _image;
 
   bool _isSearchingCep = false;
   bool _isCreatingProperty = false;
@@ -101,12 +103,19 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
   }
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
+      final directory = Directory('/storage/emulated/0/BookingApp/Images');
+      if (!directory.existsSync()) {
+        directory.createSync(recursive: true);
+      }
+
+      final File newImage = File('${directory.path}/${pickedFile.name}');
+      await File(pickedFile.path).copy(newImage.path);
+
       setState(() {
-        _image = pickedFile;
+        _image = newImage;
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

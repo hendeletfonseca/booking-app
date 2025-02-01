@@ -191,8 +191,12 @@ class BookingAppDB {
 
   Future<PropertySchema> insertProperty(PropertySchema property) async {
     final db = await instance.database;
-    final id = await db.insert('property', property.toJson());
-    return property.copy(id: id);
+    final property_id = await db.insert('property', property.toJson());
+    await db.insert(
+      'images',
+      ImageSchema(propertyId: property_id, path: property.thumbnail).toJson(),
+    );
+    return property.copy(id: property_id);
   }
 
   Future<List<PropertySchema>> getAllProperties() async {

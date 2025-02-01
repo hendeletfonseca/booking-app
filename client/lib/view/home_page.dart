@@ -158,18 +158,21 @@ class _HomePageState extends State<HomePage> {
                                         controller: PageController(
                                             viewportFraction: 0.8),
                                         itemBuilder: (context, pageIndex) {
+                                          String imagePath = images[pageIndex].path;
+                                          File imageFile = File(imagePath);
                                           return Padding(
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 5),
                                             child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              child: Image.asset(
-                                                images[pageIndex].path,
-                                                width: double.infinity,
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
+                                                    borderRadius: BorderRadius.circular(10),
+                                                    child: imageFile.existsSync()
+                                                        ? Image.file(
+                                                      imageFile,
+                                                      width: double.infinity,
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                        : const Center(child: Text('Imagem não encontrada.')),
+                                                  ),
                                           );
                                         },
                                       ),

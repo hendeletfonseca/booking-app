@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:admin/database/db.dart';
 import 'package:admin/model/address.dart';
 import 'package:admin/model/images.dart';
@@ -175,74 +177,63 @@ class _HomePageState extends State<HomePage> {
                           } else {
                             final images = imageSnapshot.data ?? [];
                             return FutureBuilder<Address?>(
-                              future: BookingAppDB.instance
-                                  .getAddress(property.addressId),
+                              future: BookingAppDB.instance.getAddress(property.addressId),
                               builder: (context, addressSnapshot) {
-                                if (addressSnapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const Center(
-                                      child: CircularProgressIndicator());
+                                if (addressSnapshot.connectionState == ConnectionState.waiting) {
+                                  return const Center(child: CircularProgressIndicator());
                                 } else if (addressSnapshot.hasError) {
                                   return Center(
                                       child: Text(
                                           'Erro ao carregar endereço: ${addressSnapshot.error}'));
                                 } else if (!addressSnapshot.hasData) {
-                                  return const Center(
-                                      child: Text('Endereço não encontrado.'));
+                                  return const Center(child: Text('Endereço não encontrado.'));
                                 } else {
                                   final address = addressSnapshot.data!;
                                   return Card(
                                     elevation: 4,
-                                    margin: const EdgeInsets.symmetric(
-                                        vertical: 10),
+                                    margin: const EdgeInsets.symmetric(vertical: 10),
                                     child: Padding(
                                       padding: const EdgeInsets.all(10),
                                       child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           // Carrossel de imagens
                                           SizedBox(
                                             height: 180,
                                             child: PageView.builder(
                                               itemCount: images.length,
-                                              controller: PageController(
-                                                  viewportFraction: 0.8),
-                                              itemBuilder:
-                                                  (context, pageIndex) {
+                                              controller: PageController(viewportFraction: 0.8),
+                                              itemBuilder: (context, pageIndex) {
+                                                String imagePath = images[pageIndex].path;
+                                                File imageFile = File(imagePath);
                                                 return Padding(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(horizontal: 5),
+                                                  padding: const EdgeInsets.symmetric(horizontal: 5),
                                                   child: ClipRRect(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10),
-                                                    child: Image.asset(
-                                                      images[pageIndex].path,
+                                                    borderRadius: BorderRadius.circular(10),
+                                                    child: imageFile.existsSync()
+                                                        ? Image.file(
+                                                      imageFile,
                                                       width: double.infinity,
                                                       fit: BoxFit.cover,
-                                                    ),
+                                                    )
+                                                        : const Center(child: Text('Imagem não encontrada.')),
                                                   ),
                                                 );
                                               },
                                             ),
                                           ),
                                           const SizedBox(height: 10),
-
                                           Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
                                               Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
                                                     '${address.localidade}, ${address.uf}',
                                                     style: const TextStyle(
                                                       fontSize: 18,
-                                                      fontWeight:
-                                                          FontWeight.bold,
+                                                      fontWeight: FontWeight.bold,
                                                     ),
                                                   ),
                                                   Text(
@@ -259,17 +250,11 @@ class _HomePageState extends State<HomePage> {
                                                   IconButton(
                                                     icon: const Icon(Icons.edit, color: Colors.blue),
                                                     onPressed: () {
-                                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                                        content: Text('IMPLEMENTAR PAGINA EDIÇAO')
-                                                      ));
-                                                      // Navigator.pushNamed(
-                                                      //   context,
-                                                      //   '/edit_property',
-                                                      //   arguments: property,
-                                                      // );
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        const SnackBar(content: Text('IMPLEMENTAR PAGINA EDIÇAO')),
+                                                      );
                                                     },
                                                   ),
-                                                  // Botão de Deletar
                                                   IconButton(
                                                     icon: const Icon(Icons.delete, color: Colors.red),
                                                     onPressed: () async {
@@ -293,7 +278,6 @@ class _HomePageState extends State<HomePage> {
                                                           ],
                                                         ),
                                                       );
-
                                                       if (confirmDelete == true) {
                                                         await _deleteProperty(property.id!);
                                                       }
