@@ -2,8 +2,13 @@ import 'package:booking_app/model/user.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:io';
 
+import '../model/address.dart';
+import '../model/booking.dart';
+import '../model/images.dart';
+import '../model/property.dart';
+
 Future<void> _createDatabase(Database db, int version) async {
-  return await db.execute('''
+  await db.execute('''
         CREATE TABLE user(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name VARCHAR NOT NULL,
@@ -11,6 +16,62 @@ Future<void> _createDatabase(Database db, int version) async {
           password VARCHAR NOT NULL
         )
       ''');
+
+  await db.execute('''
+        CREATE TABLE address(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cep VARCHAR NOT NULL UNIQUE,
+        logradouro VARCHAR NOT NULL,
+        bairro VARCHAR NOT NULL,
+        localidade VARCHAR NOT NULL,
+        uf VARCHAR NOT NULL,
+        estado VARCHAR NOT NULL
+      )
+      ''');
+  print("Tabela address criada.");
+
+
+  await db.execute('''
+      CREATE TABLE property(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      address_id INTEGER NOT NULL,
+      title VARCHAR NOT NULL,
+      description VARCHAR NOT NULL,
+      number INTEGER NOT NULL,
+      complement VARCHAR,
+      price REAL NOT NULL,
+      max_guest INTEGER NOT NULL,
+      thumbnail VARCHAR NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES user(id),
+      FOREIGN KEY(address_id) REFERENCES address(id)
+)
+  ''');
+
+  await db.execute('''
+    CREATE TABLE images(
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     property_id INTEGER NOT NULL,
+     path VARCHAR NOT NULL,    
+     FOREIGN KEY(property_id) REFERENCES property(id)
+   )
+   ''');
+
+  await db.execute('''
+    CREATE TABLE booking(
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     user_id INTEGER NOT NULL,
+     property_id INTEGER NOT NULL,
+     checkin_date VARCHAR NOT NULL,
+     checkout_date VARCHAR NOT NULL,
+     total_days INTEGER NOT NULL,
+     total_price REAL NOT NULL,
+     amount_guest INTEGER NOT NULL,
+     rating REAL,
+     FOREIGN KEY(user_id) REFERENCES user(id),
+     FOREIGN KEY(property_id) REFERENCES property(id) ON DELETE CASCADE
+    )
+  ''');
 }
 
 class BookingAppDB {
@@ -88,4 +149,76 @@ class BookingAppDB {
 
     return null;
   }
+
+  // Método para buscar todas as propriedades
+  Future<List<PropertySchema>> getAllProperties() async {
+    final db = await instance.database;
+    final properties = await db.query('property');
+    return properties.map((json) => PropertySchema.fromJson(json)).toList();
+  }
+
+  // Método para buscar um endereço por ID
+  Future<AddressSchema?> getAddress(int id) async {
+    final db = await instance.database;
+    final addresses = await db.query(
+      'address',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (addresses.isNotEmpty) {
+      return AddressSchema.fromJson(addresses.first);
+    }
+    return null;
+  }
+
+  // Método para buscar imagens de uma propriedade
+  Future<List<ImageSchema>> getImagesByProperty(int propertyId) async {
+    final db = await instance.database;
+    final images = await db.query(
+      'images',
+      where: 'property_id = ?',
+      whereArgs: [propertyId],
+    );
+    return images.map((json) => ImageSchema.fromJson(json)).toList();
+  }
+
+  // Método para buscar reservas por usuário
+  Future<List<BookingSchema>> getBookingsByUser(int userId) async {
+    final db = await instance.database;
+    final bookings = await db.query(
+      'booking',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+    );
+    return bookings.map((json) => BookingSchema.fromJson(json)).toList();
+  }
+
+  // Método para inserir uma reserva
+  Future<int> insertBooking(BookingSchema booking) async {
+    final db = await instance.database;
+    return await db.insert('booking', booking.toJson());
+  }
+
+  // Método para atualizar uma reserva
+  Future<int> updateBooking(BookingSchema booking) async {
+    final db = await instance.database;
+    return await db.update(
+      'booking',
+      booking.toJson(),
+      where: 'id = ?',
+      whereArgs: [booking.id],
+    );
+  }
+
+  // Método para remover uma reserva
+  Future<int> deleteBooking(int id) async {
+    final db = await instance.database;
+    return await db.delete(
+      'booking',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+
 }

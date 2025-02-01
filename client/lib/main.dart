@@ -1,14 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:booking_app/service/auth_preferences.dart';
 import 'package:booking_app/routes/app_routes.dart';
+import 'package:booking_app/view/home_page.dart'; // Importe a HomePage
+import 'package:booking_app/sample_data.dart';
+
+import 'database/db.dart'; // Importe o arquivo de dados de teste
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  String initialRoute;
-  bool isAuthenticated = await AuthPreferences.isAuthenticated();
+  WidgetsFlutterBinding.ensureInitialized();
 
-  initialRoute = isAuthenticated ? '/home' : '/login';
-  initialRoute = '/home';
+  // Inicializa o banco de dados
+  await BookingAppDB.instance.database;
+  print("bd ok");
+
+  // Insere os dados de teste (se necessário)
+  try {
+    await insertSampleData();
+  } catch (e) {
+    print("Erro ao inserir dados de teste: $e");
+  }
+
+
+  // Verifica se o usuário está autenticado
+  bool isAuthenticated = await AuthPreferences.isAuthenticated();
+  String initialRoute = isAuthenticated ? '/home' : '/login';
+
 
   runApp(
     MyApp(
