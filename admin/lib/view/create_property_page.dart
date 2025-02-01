@@ -2,13 +2,11 @@ import 'package:admin/database/db.dart';
 import 'package:admin/model/address.dart';
 import 'package:admin/model/property.dart';
 import 'package:admin/model/user.dart';
-import 'package:admin/service/auth_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:admin/service/api.dart' as api;
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
-import 'package:path_provider/path_provider.dart';
 
 class CreatePropertyPage extends StatefulWidget {
   const CreatePropertyPage({super.key});
@@ -21,7 +19,8 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
   UserSchema? _user;
 
   final ImagePicker _picker = ImagePicker();
-  File? _image;
+  File? _imageThumbnail;
+  List<File> _images = [];
 
   bool _isSearchingCep = false;
   bool _isCreatingProperty = false;
@@ -102,7 +101,7 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
     );
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickThumbnail() async {
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
@@ -114,9 +113,37 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
       final File newImage = File('${directory.path}/${pickedFile.name}');
       await File(pickedFile.path).copy(newImage.path);
 
+      
+        setState(() {
+          _imageThumbnail = newImage;
+        });
+       
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nenhuma imagem selecionada'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      final directory = Directory('/storage/emulated/0/BookingApp/Images');
+      if (!directory.existsSync()) {
+        directory.createSync(recursive: true);
+      }
+
+      final File newImage = File('${directory.path}/${pickedFile.name}');
+      await File(pickedFile.path).copy(newImage.path);
+      
       setState(() {
-        _image = newImage;
+        _images.add(newImage);
       });
+       
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -182,7 +209,7 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
       return;
     }
 
-    if (_image == null) {
+    if (_imageThumbnail == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('A imagem do thumbnail é obrigatória'),
@@ -221,10 +248,13 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
       complement: _complementController.text,
       price: double.parse(_priceController.text),
       maxGuests: int.parse(_maxGuestController.text),
-      thumbnail: _image!.path,
+      thumbnail: _imageThumbnail!.path,
     );
 
-    property = await db.insertProperty(property);
+    // crie uma lista com os paths de _images
+    final List<String> imagePaths = _images.map((image) => image.path).toList();
+
+    property = await db.insertProperty(property, imagePaths);
 
     setState(() {
       _isCreatingProperty = false;
@@ -317,10 +347,14 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
               _buildTextField("Máx. Hóspedes", _maxGuestController,
                   keyboardType: TextInputType.number),
               ElevatedButton(
-                onPressed: _pickImage,
+                onPressed: _pickThumbnail,
                 child: const Text("Selecionar Imagem (Thumbnail)"),
               ),
-              if (_image != null) Image.file(File(_image!.path), height: 100),
+              ElevatedButton(
+                onPressed: _pickImage,
+                child: const Text("Selecionar Imagens"),
+              ),
+              if (_imageThumbnail != null) Image.file(File(_imageThumbnail!.path), height: 100),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,

@@ -12,6 +12,7 @@ class PropertySchema {
   final double price;
   final int maxGuests;
   final String thumbnail;
+  List<String>? images;
 
   PropertySchema({
     this.id,
@@ -24,6 +25,7 @@ class PropertySchema {
     required this.price,
     required this.maxGuests,
     required this.thumbnail,
+    this.images,
   });
 
   Map<String, dynamic> toJson() {
@@ -67,6 +69,7 @@ class PropertySchema {
     double? price,
     int? maxGuests,
     String? thumbnail,
+    List<String>? images,
   }) {
     return PropertySchema(
       id: id ?? this.id,
@@ -79,6 +82,7 @@ class PropertySchema {
       price: price ?? this.price,
       maxGuests: maxGuests ?? this.maxGuests,
       thumbnail: thumbnail ?? this.thumbnail,
+      images: images ?? this.images,
     );
   }
 

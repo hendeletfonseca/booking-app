@@ -189,14 +189,20 @@ class BookingAppDB {
     return properties.any((element) => element['cep'] == cep);
   }
 
-  Future<PropertySchema> insertProperty(PropertySchema property) async {
+  Future<PropertySchema> insertProperty(PropertySchema property, List<String> images) async {
     final db = await instance.database;
-    final property_id = await db.insert('property', property.toJson());
+    final propertyId = await db.insert('property', property.toJson());
     await db.insert(
       'images',
-      ImageSchema(propertyId: property_id, path: property.thumbnail).toJson(),
+      ImageSchema(propertyId: propertyId, path: property.thumbnail).toJson(),
     );
-    return property.copy(id: property_id);
+    for (final image in images) {
+      await db.insert(
+      'images',
+      ImageSchema(propertyId: propertyId, path: image).toJson(),
+    );
+    }
+    return property.copy(id: propertyId);
   }
 
   Future<List<PropertySchema>> getAllProperties() async {

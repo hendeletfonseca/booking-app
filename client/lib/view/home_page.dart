@@ -4,14 +4,12 @@ import 'package:booking_app/database/db.dart';
 import 'package:booking_app/model/user.dart';
 import 'package:booking_app/model/images.dart';
 import 'package:booking_app/model/address.dart';
-import 'package:booking_app/model/booking.dart';
 import 'package:booking_app/model/property.dart';
 import 'package:booking_app/service/auth_preferences.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:sqflite/sqflite.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
