@@ -117,7 +117,13 @@ class _HomePageState extends State<HomePage> {
                     context,
                     '/create-property',
                     arguments: _user,
-                  );
+                  ).then((_) {
+                    BookingAppDB.instance.getAllProperties().then((value) {
+                    setState(() {
+                      _propertiesFuture = Future.value(value);
+                    });
+                  });
+                  });
                 },
                 child: const Icon(Icons.add),
               ),
