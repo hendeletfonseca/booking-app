@@ -104,15 +104,10 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Admin'),
-      ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                onPressed: () {
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
                   Navigator.pushNamed(
                     context,
                     '/create-property',
@@ -125,44 +120,54 @@ class _HomePageState extends State<HomePage> {
                   });
                   });
                 },
-                child: const Icon(Icons.add),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  _signOut().then((_) {
-                    Navigator.popAndPushNamed(context, '/login');
-                  });
-                },
-                child: const Text(
-                  'DESLOGAR',
-                  style: TextStyle(fontSize: 18),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  BookingAppDB.instance.getAllProperties().then((value) {
-                    setState(() {
-                      _propertiesFuture = Future.value(value);
-                    });
-                  });
-                },
-                child: const Icon(Icons.refresh),
-              ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              BookingAppDB.instance.getAllProperties().then((value) {
+                setState(() {
+                  _propertiesFuture = Future.value(value);
+                });
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              _signOut().then((_) {
+                Navigator.popAndPushNamed(context, '/login');
+              });
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("Minhas propriedades",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  )),
             ],
           ),
           Expanded(
             child: FutureBuilder<List<PropertySchema>>(
               future: _propertiesFuture,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                final allProperties = snapshot.data!;
+                final properties = allProperties.where((property) => property.userId == _user!.id).toList();
+                if (snapshot.connectionState == ConnectionState.waiting || _user == null) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Erro: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty || properties.isEmpty) {
                   return const Center(
                       child: Text('Nenhuma propriedade encontrada.'));
                 } else {
-                  final properties = snapshot.data!;
                   return ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: properties.length,
