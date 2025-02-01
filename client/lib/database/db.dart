@@ -52,7 +52,7 @@ Future<void> _createDatabase(Database db, int version) async {
      id INTEGER PRIMARY KEY AUTOINCREMENT,
      property_id INTEGER NOT NULL,
      path VARCHAR NOT NULL,    
-     FOREIGN KEY(property_id) REFERENCES property(id)
+     FOREIGN KEY(property_id) REFERENCES property(id) ON DELETE CASCADE
    )
    ''');
 
