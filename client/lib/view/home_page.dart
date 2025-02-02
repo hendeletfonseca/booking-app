@@ -34,7 +34,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _checkAndRequestPermission() async {
-    if (await Permission.manageExternalStorage.isGranted) return;
+    if (await Permission.manageExternalStorage.isGranted){
+      _getUserData();
+      return;
+    }
     _showPermissionDialog();
   }
 
@@ -359,7 +362,7 @@ class _HomePageState extends State<HomePage> {
               title: const Text('Deslogar'),
               onTap: () {
                 _signOut().then((_) {
-                  Navigator.popAndPushNamed(context, '/login');
+                  Navigator.pushReplacementNamed(context, '/login');
                 });
               },
             ),
