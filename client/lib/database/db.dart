@@ -30,7 +30,6 @@ Future<void> _createDatabase(Database db, int version) async {
       ''');
   print("Tabela address criada.");
 
-
   await db.execute('''
       CREATE TABLE property(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -165,8 +164,6 @@ class BookingAppDB {
     return result.map((json) => PropertySchema.fromJson(json)).toList();
   }
 
-
-  // Método para buscar um endereço por ID
   Future<AddressSchema?> getAddress(int id) async {
     final db = await instance.database;
     final addresses = await db.query(
@@ -178,6 +175,18 @@ class BookingAppDB {
       return AddressSchema.fromJson(addresses.first);
     }
     return null;
+  }
+
+  Future<List<AddressSchema>> getAllAddresses() async {
+    final db = await instance.database;
+    final addresses = await db.query(
+      'address',
+    );
+    if (addresses.isNotEmpty) {
+      return addresses.map((json) => AddressSchema.fromJson(json)).toList();
+    }
+    // return empty list
+    return [];
   }
 
   // Método para buscar imagens de uma propriedade
@@ -249,5 +258,69 @@ class BookingAppDB {
     return 0;
   }
 
+  Future<List<BookingSchema>> getBookingsByProperty(int propertyId) async {
+    final db = await instance.database;
+    final bookings = await db.query(
+      'booking',
+      where: 'property_id = ?',
+      whereArgs: [propertyId],
+    );
+    return bookings.map((json) => BookingSchema.fromJson(json)).toList();
+  }
+
+  Future<List<PropertySchema>> getFilteredProperties({
+    String? uf,
+    String? cidade,
+    String? bairro,
+    DateTime? checkin,
+    DateTime? checkout,
+    int? hospedes,
+  }) async {
+    String query = '''
+    SELECT property.*
+    FROM property
+    INNER JOIN address ON property.address_id = address.id
+    WHERE 1 = 1
+  ''';
+
+    // Add filters based on the provided criteria
+    if (uf != null) {
+      query += " AND address.uf = '$uf'";
+    }
+    if (cidade != null) {
+      query += " AND address.localidade = '$cidade'";
+    }
+    if (bairro != null) {
+      query += " AND address.bairro = '$bairro'";
+    }
+    if (hospedes != null) {
+      query += " AND property.max_guest >= $hospedes";
+    }
+
+    final db = await instance.database;
+    List<Map<String, dynamic>> propertyMaps = await db.rawQuery(query);
+
+    List<PropertySchema> filteredProperties = [];
+    for (var propertyMap in propertyMaps) {
+      PropertySchema property = PropertySchema.fromJson(propertyMap);
+
+      List<BookingSchema> bookings = await getBookingsByProperty(property.id!);
+      bool isAvailable = true;
+
+      if (checkin != null && checkout != null) {
+        for (var booking in bookings) {
+          DateTime checkinDate = DateTime.parse(booking.checkinDate);
+          DateTime checkoutDate = DateTime.parse(booking.checkoutDate);
+
+          if (checkin.isBefore(checkoutDate) && checkout.isAfter(checkinDate)) {
+            isAvailable = false;
+            break;
+          }
+        }
+      }
+      if (isAvailable) filteredProperties.add(property);
+    }
+    return filteredProperties;
+  }
 
 }
