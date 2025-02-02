@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:admin/service/api.dart' as api;
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-
+import 'package:carousel_slider/carousel_slider.dart';
 
 class CreatePropertyPage extends StatefulWidget {
   const CreatePropertyPage({super.key});
@@ -350,11 +350,45 @@ class _CreatePropertyState extends State<CreatePropertyPage> {
                 onPressed: _pickThumbnail,
                 child: const Text("Selecionar Imagem (Thumbnail)"),
               ),
+              if (_imageThumbnail != null)
+                Image.file(
+                  File(_imageThumbnail!.path),
+                  height: 200,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
               ElevatedButton(
                 onPressed: _pickImage,
-                child: const Text("Selecionar Imagens"),
+                child: const Text("Selecionar Imagens Adicionais"),
               ),
-              if (_imageThumbnail != null) Image.file(File(_imageThumbnail!.path), height: 100),
+              if (_images.isNotEmpty)
+                CarouselSlider(
+                  options: CarouselOptions(
+                    height: 200,
+                    autoPlay: true,
+                    enableInfiniteScroll: false,
+                    enlargeCenterPage: true,
+                    aspectRatio: 16 / 9,
+                    viewportFraction: 0.8,
+                  ),
+                  items: _images.map((image) {
+                    return Builder(
+                      builder: (BuildContext context) {
+                        return Container(
+                          width: MediaQuery.of(context).size.width,
+                          margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            image: DecorationImage(
+                              image: FileImage(File(image.path)),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }).toList(),
+                ),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,

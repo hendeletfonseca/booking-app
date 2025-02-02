@@ -211,6 +211,12 @@ class BookingAppDB {
     return properties.map((json) => PropertySchema.fromJson(json)).toList();
   }
 
+  Future<List<ImageSchema>> getAllImages() async {
+    final db = await instance.database;
+    final images = await db.query('images');
+    return images.map((json) => ImageSchema.fromJson(json)).toList();
+  }
+
   Future<List<ImageSchema>> getImagesByProperty(int propertyId) async {
     final db = await instance.database;
     final images = await db.query(

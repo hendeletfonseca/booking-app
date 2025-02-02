@@ -158,16 +158,16 @@ class _HomePageState extends State<HomePage> {
             child: FutureBuilder<List<PropertySchema>>(
               future: _propertiesFuture,
               builder: (context, snapshot) {
-                final allProperties = snapshot.data!;
-                final properties = allProperties.where((property) => property.userId == _user!.id).toList();
                 if (snapshot.connectionState == ConnectionState.waiting || _user == null) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Erro: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty || properties.isEmpty) {
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty || snapshot.data!.where((property) => property.userId == _user!.id).toList().isEmpty) {
                   return const Center(
                       child: Text('Nenhuma propriedade encontrada.'));
                 } else {
+                  final allProperties = snapshot.data!;
+                  final properties = allProperties.where((property) => property.userId == _user!.id).toList();
                   return ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: properties.length,
@@ -261,9 +261,20 @@ class _HomePageState extends State<HomePage> {
                                                   IconButton(
                                                     icon: const Icon(Icons.edit, color: Colors.blue),
                                                     onPressed: () {
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        const SnackBar(content: Text('IMPLEMENTAR PAGINA EDIÇAO')),
-                                                      );
+                                                      Navigator.pushNamed(
+                                                        context,
+                                                        '/edit-property',
+                                                        arguments: {
+                                                          'property': property,
+                                                          'user': _user,
+                                                        },
+                                                      ).then((_) {
+                                                        BookingAppDB.instance.getAllProperties().then((value) {
+                                                          setState(() {
+                                                            _propertiesFuture = Future.value(value);
+                                                          });
+                                                        });
+                                                      });
                                                     },
                                                   ),
                                                   IconButton(

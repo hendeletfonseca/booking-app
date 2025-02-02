@@ -1,3 +1,4 @@
+import 'package:admin/view/edit_property_page.dart';
 import 'package:admin/view/home_page.dart';
 import 'package:admin/view/login_page.dart';
 import 'package:admin/view/register_page.dart';
@@ -9,4 +10,5 @@ final routes = {
   '/login': (BuildContext context) => const LoginPage(),
   '/register': (BuildContext context) => const RegisterPage(),
   '/create-property': (BuildContext context) => const CreatePropertyPage(),
+  '/edit-property': (BuildContext context) => const EditPropertyPage(),
 };
