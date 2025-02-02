@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:booking_app/service/auth_preferences.dart';
 import 'package:booking_app/routes/app_routes.dart';
 
+
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
 
   bool isAuthenticated = await AuthPreferences.isAuthenticated();
   String initialRoute = isAuthenticated ? '/home' : '/login';
-  initialRoute = '/home';
 
   runApp(
     MyApp(
@@ -15,11 +16,10 @@ void main() async {
     ),
   );
 }
-
 class MyApp extends StatelessWidget {
   final String initialRoute;
 
-  const MyApp({super.key, required this.initialRoute});
+  const MyApp({super.key, required this.initialRoute});  
 
   @override
   Widget build(BuildContext context) {

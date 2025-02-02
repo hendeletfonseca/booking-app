@@ -41,6 +41,7 @@ dependencies:
   path_provider: ^2.1.5
   permission_handler: ^11.3.1
   carousel_slider: ^4.2.1
+  table_calendar: ^3.0.9
 
 dev_dependencies:
   flutter_test:
@@ -67,9 +68,8 @@ flutter:
   # To add assets to your application, add an assets section, like this:
 
   assets:
-    - assets/images/chale_ex_1.jpg
-    - assets/images/chale_ex_2.jpg
-    - assets/images/chale_ex_3.jpg
+    - assets/images/
+    #- Images/
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

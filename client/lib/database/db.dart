@@ -30,6 +30,7 @@ Future<void> _createDatabase(Database db, int version) async {
       ''');
   print("Tabela address criada.");
 
+
   await db.execute('''
       CREATE TABLE property(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,7 +53,7 @@ Future<void> _createDatabase(Database db, int version) async {
      id INTEGER PRIMARY KEY AUTOINCREMENT,
      property_id INTEGER NOT NULL,
      path VARCHAR NOT NULL,    
-     FOREIGN KEY(property_id) REFERENCES property(id) ON DELETE CASCADE
+     FOREIGN KEY(property_id) REFERENCES property(id)
    )
    ''');
 
@@ -152,9 +153,18 @@ class BookingAppDB {
   // Método para buscar todas as propriedades
   Future<List<PropertySchema>> getAllProperties() async {
     final db = await instance.database;
-    final properties = await db.query('property');
-    return properties.map((json) => PropertySchema.fromJson(json)).toList();
+
+    final result = await db.rawQuery('''
+    SELECT property.*, AVG(booking.rating) AS average_rating
+    FROM property
+    LEFT JOIN booking ON property.id = booking.property_id
+    GROUP BY property.id
+    ORDER BY average_rating DESC
+  ''');
+
+    return result.map((json) => PropertySchema.fromJson(json)).toList();
   }
+
 
   // Método para buscar um endereço por ID
   Future<AddressSchema?> getAddress(int id) async {
@@ -218,4 +228,26 @@ class BookingAppDB {
       whereArgs: [id],
     );
   }
+
+  //média dos ratings por propriedade
+  Future<double> getAverageRatingForProperty(int propertyId) async {
+    final db = await instance.database;
+
+    final result = await db.rawQuery(
+      '''
+    SELECT AVG(rating) AS average_rating
+    FROM booking
+    WHERE property_id = ? AND rating IS NOT NULL
+    ''',
+      [propertyId],
+    );
+
+    if (result.isNotEmpty && result.first['average_rating'] != null) {
+      return result.first['average_rating'] as double;
+    }
+
+    return 0;
+  }
+
+
 }

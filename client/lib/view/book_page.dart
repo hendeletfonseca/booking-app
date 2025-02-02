@@ -1,9 +1,10 @@
-import 'package:client/model/user.dart';
-import 'package:client/service/auth_preferences.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+import '../model/user.dart';
+import '../service/auth_preferences.dart';
 
 class BookPage extends StatefulWidget {
   const BookPage({super.key});
