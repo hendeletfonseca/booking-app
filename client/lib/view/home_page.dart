@@ -34,7 +34,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _checkAndRequestPermission() async {
-    if (await Permission.manageExternalStorage.isGranted) return;
+    if (await Permission.manageExternalStorage.isGranted){
+      _getUserData();
+      return;
+    }
     _showPermissionDialog();
   }
 
@@ -91,7 +94,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showCalendarDialog(BuildContext context, Function(DateTime) onDateSelected) {
+  void _showCalendarDialog(
+      BuildContext context, Function(DateTime) onDateSelected) {
     DateTime _selectedDate = DateTime.now(); // Data inicial
 
     showDialog(
@@ -219,7 +223,8 @@ class _HomePageState extends State<HomePage> {
                     // Abre o calendário quando o campo é tocado
                     _showCalendarDialog(context, (selectedDate) {
                       setState(() {
-                        _dataCheckin = selectedDate; // Atualiza a data de check-in
+                        _dataCheckin =
+                            selectedDate;
                       });
                     });
                   },
@@ -227,7 +232,7 @@ class _HomePageState extends State<HomePage> {
                     child: TextField(
                       decoration: InputDecoration(
                         hintText: _dataCheckin != null
-                            ? '${_dataCheckin!.day}/${_dataCheckin!.month}/${_dataCheckin!.year}' // Exibe a data de check-in
+                            ? '${_dataCheckin!.day}/${_dataCheckin!.month}/${_dataCheckin!.year}'
                             : 'Data de check-in',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -242,7 +247,8 @@ class _HomePageState extends State<HomePage> {
                     // Abre o calendário quando o campo é tocado
                     _showCalendarDialog(context, (selectedDate) {
                       setState(() {
-                        _dataCheckout = selectedDate; // Atualiza a data de check-out
+                        _dataCheckout =
+                            selectedDate; // Atualiza a data de check-out
                       });
                     });
                   },
@@ -269,16 +275,26 @@ class _HomePageState extends State<HomePage> {
                   ),
                   onChanged: (value) {
                     setState(() {
-                      _hospedes = int.tryParse(value); // Atualiza o número de hóspedes
+                      _hospedes =
+                          int.tryParse(value); // Atualiza o número de hóspedes
                     });
                   },
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    // buscar propriedades
-                    //usar _uf, _cidade, _bairro, _dataCheckin, _dataCheckout e _hospedes
                     Navigator.pop(context);
+                    setState(() {
+                      _propertiesFuture =
+                          BookingAppDB.instance.getFilteredProperties(
+                        uf: _uf,
+                        cidade: _cidade,
+                        bairro: _bairro,
+                        checkin: _dataCheckin,
+                        checkout: _dataCheckout,
+                        hospedes: _hospedes,
+                      );
+                    });
                   },
                   child: const Text('Buscar'),
                 ),
@@ -295,7 +311,8 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Padding(
-          padding: EdgeInsets.only(left: 50.0), // Ajuste o valor conforme necessário
+          padding: EdgeInsets.only(left: 50.0),
+          // Ajuste o valor conforme necessário
           child: Image.asset(
             'assets/images/booking-texto.png',
             width: 150,
@@ -345,7 +362,7 @@ class _HomePageState extends State<HomePage> {
               title: const Text('Deslogar'),
               onTap: () {
                 _signOut().then((_) {
-                  Navigator.popAndPushNamed(context, '/login');
+                  Navigator.pushReplacementNamed(context, '/login');
                 });
               },
             ),
@@ -377,53 +394,68 @@ class _HomePageState extends State<HomePage> {
                     },); //tela de reservar
                   },
                   child: FutureBuilder<List<ImageSchema>>(
-                    future: BookingAppDB.instance.getImagesByProperty(property.id!),
+                    future:
+                        BookingAppDB.instance.getImagesByProperty(property.id!),
                     builder: (context, imageSnapshot) {
-                      if (imageSnapshot.connectionState == ConnectionState.waiting) {
+                      if (imageSnapshot.connectionState ==
+                          ConnectionState.waiting) {
                         return const CircularProgressIndicator();
                       } else if (imageSnapshot.hasError) {
-                        return Text('Erro ao carregar imagens: ${imageSnapshot.error}');
+                        return Text(
+                            'Erro ao carregar imagens: ${imageSnapshot.error}');
                       } else {
                         final images = imageSnapshot.data ?? [];
                         return FutureBuilder<AddressSchema?>(
-                          future: BookingAppDB.instance.getAddress(property.addressId),
+                          future: BookingAppDB.instance
+                              .getAddress(property.addressId),
                           builder: (context, addressSnapshot) {
-                            if (addressSnapshot.connectionState == ConnectionState.waiting) {
+                            if (addressSnapshot.connectionState ==
+                                ConnectionState.waiting) {
                               return const CircularProgressIndicator();
                             } else if (addressSnapshot.hasError) {
-                              return Text('Erro ao carregar endereço: ${addressSnapshot.error}');
+                              return Text(
+                                  'Erro ao carregar endereço: ${addressSnapshot.error}');
                             } else if (!addressSnapshot.hasData) {
                               return const Text('Endereço não encontrado.');
                             } else {
                               final address = addressSnapshot.data!;
                               return Card(
                                 elevation: 4,
-                                margin: const EdgeInsets.symmetric(vertical: 10),
+                                margin:
+                                    const EdgeInsets.symmetric(vertical: 10),
                                 child: Padding(
                                   padding: const EdgeInsets.all(10),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       // Carrossel de imagens
                                       SizedBox(
                                         height: 180,
                                         child: PageView.builder(
                                           itemCount: images.length,
-                                          controller: PageController(viewportFraction: 0.8),
+                                          controller: PageController(
+                                              viewportFraction: 0.8),
                                           itemBuilder: (context, pageIndex) {
-                                            String imagePath = images[pageIndex].path;
+                                            String imagePath =
+                                                images[pageIndex].path;
                                             File imageFile = File(imagePath);
                                             return Padding(
-                                              padding: const EdgeInsets.symmetric(horizontal: 5),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 5),
                                               child: ClipRRect(
-                                                borderRadius: BorderRadius.circular(10),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
                                                 child: imageFile.existsSync()
                                                     ? Image.file(
-                                                  imageFile,
-                                                  width: double.infinity,
-                                                  fit: BoxFit.cover,
-                                                )
-                                                    : const Center(child: Text('Imagem não encontrada.')),
+                                                        imageFile,
+                                                        width: double.infinity,
+                                                        fit: BoxFit.cover,
+                                                      )
+                                                    : const Center(
+                                                        child: Text(
+                                                            'Imagem não encontrada.')),
                                               ),
                                             );
                                           },
@@ -449,9 +481,12 @@ class _HomePageState extends State<HomePage> {
                                         ),
                                       ),
                                       FutureBuilder<double>(
-                                        future: BookingAppDB.instance.getAverageRatingForProperty(property.id!),
+                                        future: BookingAppDB.instance
+                                            .getAverageRatingForProperty(
+                                                property.id!),
                                         builder: (context, ratingSnapshot) {
-                                          if (ratingSnapshot.connectionState == ConnectionState.waiting) {
+                                          if (ratingSnapshot.connectionState ==
+                                              ConnectionState.waiting) {
                                             return const Text(
                                               'Carregando avaliação...',
                                               style: TextStyle(
@@ -467,7 +502,8 @@ class _HomePageState extends State<HomePage> {
                                                 color: Colors.grey,
                                               ),
                                             );
-                                          } else if (!ratingSnapshot.hasData || ratingSnapshot.data == 0) {
+                                          } else if (!ratingSnapshot.hasData ||
+                                              ratingSnapshot.data == 0) {
                                             return const Text(
                                               'Sem avaliações',
                                               style: TextStyle(
@@ -476,7 +512,8 @@ class _HomePageState extends State<HomePage> {
                                               ),
                                             );
                                           } else {
-                                            final averageRating = ratingSnapshot.data!;
+                                            final averageRating =
+                                                ratingSnapshot.data!;
                                             return Text(
                                               '★ ${averageRating.toStringAsFixed(1)}',
                                               style: const TextStyle(
@@ -506,7 +543,7 @@ class _HomePageState extends State<HomePage> {
       floatingActionButton: Container(
         width: MediaQuery.of(context).size.width * 0.9, // largura da tela
         child: FloatingActionButton.extended(
-          onPressed: (){
+          onPressed: () {
             _showSearchBottomSheet(context);
           },
           icon: Icon(Icons.search),
@@ -514,8 +551,10 @@ class _HomePageState extends State<HomePage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Explore novas experiências!', style: TextStyle(fontSize: 16)),
-              Text('A qualquer lugar • A qualquer hora', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              Text('Explore novas experiências!',
+                  style: TextStyle(fontSize: 16)),
+              Text('A qualquer lugar • A qualquer hora',
+                  style: TextStyle(fontSize: 12, color: Colors.grey)),
             ],
           ),
           backgroundColor: Colors.white,
@@ -528,5 +567,4 @@ class _HomePageState extends State<HomePage> {
   Future<void> _signOut() async {
     await AuthPreferences.removeAuthenticationInfo();
   }
-
 }

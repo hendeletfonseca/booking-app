@@ -5,7 +5,6 @@ import 'package:booking_app/routes/app_routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  WidgetsFlutterBinding.ensureInitialized();
 
   bool isAuthenticated = await AuthPreferences.isAuthenticated();
   String initialRoute = isAuthenticated ? '/home' : '/login';

@@ -27,6 +27,11 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Image.asset(
+                'assets/images/booking-clients-logo.png',
+                width: 250,
+                height: 130,
+              ),
               const Text(
                 'Bem vindo de volta!',
                 style: TextStyle(
