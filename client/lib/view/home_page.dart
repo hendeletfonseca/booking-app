@@ -370,7 +370,11 @@ class _HomePageState extends State<HomePage> {
                 final property = properties[index];
                 return GestureDetector(
                   onTap: () {
-                    Navigator.popAndPushNamed(context, 'book-page'); //tela de reservar
+                    Navigator.pushNamed(context, '/book-page',  
+                      arguments: {
+                      'property': property,
+                      'user': _user,
+                    },); //tela de reservar
                   },
                   child: FutureBuilder<List<ImageSchema>>(
                     future: BookingAppDB.instance.getImagesByProperty(property.id!),

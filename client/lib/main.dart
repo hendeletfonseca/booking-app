@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:booking_app/service/auth_preferences.dart';
+import 'service/auth_preferences.dart';
 import 'package:booking_app/routes/app_routes.dart';
 
 

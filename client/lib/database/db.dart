@@ -1,7 +1,6 @@
 import 'package:booking_app/model/user.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:io';
-
 import '../model/address.dart';
 import '../model/booking.dart';
 import '../model/images.dart';
@@ -52,7 +51,7 @@ Future<void> _createDatabase(Database db, int version) async {
     CREATE TABLE images(
      id INTEGER PRIMARY KEY AUTOINCREMENT,
      property_id INTEGER NOT NULL,
-     path VARCHAR NOT NULL,    
+     path VARCHAR NOT NULL,
      FOREIGN KEY(property_id) REFERENCES property(id)
    )
    ''');
@@ -249,5 +248,62 @@ class BookingAppDB {
     return 0;
   }
 
+  // Método para checar conflito em reservas
+  Future<bool> checkBookingConflict(int? propertyId, DateTime checkin, DateTime checkout) async {
+    final db = await instance.database;
 
+    final result = await db.rawQuery('''
+      SELECT * FROM booking 
+      WHERE property_id = ? 
+      AND (
+        (checkin_date BETWEEN ? AND ?) 
+        OR (checkout_date BETWEEN ? AND ?) 
+        OR (? BETWEEN checkin_date AND checkout_date)
+        OR (? BETWEEN checkin_date AND checkout_date)
+      )
+    ''', [propertyId, checkin.toIso8601String(), checkout.toIso8601String(), 
+        checkin.toIso8601String(), checkout.toIso8601String(), 
+        checkin.toIso8601String(), checkout.toIso8601String()]);
+
+    return result.isNotEmpty;
+  }
+
+  // Método para fazer uma reserva
+  Future<String> makeBooking({
+    required int userId,
+    required int propertyId,
+    required DateTime checkin,
+    required DateTime checkout,
+    required int guests,
+    required double pricePerNight,
+    required double rating,
+  }) async {
+    final db = await instance.database;
+
+    bool conflict = await checkBookingConflict(propertyId, checkin, checkout);
+    
+    if (conflict) {
+      return "Erro: Já existe uma reserva para essas datas.";
+    }
+
+    int totalDays = checkout.difference(checkin).inDays;
+    double totalPrice = totalDays * pricePerNight;
+
+    String checkinStr = checkin.toIso8601String().split("T")[0];
+    String checkoutStr = checkout.toIso8601String().split("T")[0];
+
+    BookingSchema booking = BookingSchema(
+      userId: userId,
+      propertyId: propertyId,
+      checkinDate: checkinStr,
+      checkoutDate: checkoutStr,
+      totalDays: totalDays,
+      totalPrice: totalPrice,
+      amountGuest: guests,
+      rating: rating,
+    );
+
+    await db.insert('booking', booking.toJson());
+    return "Reserva feita com sucesso!";
+  }
 }
